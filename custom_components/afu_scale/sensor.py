@@ -41,6 +41,7 @@ SENSOR_DEFS: dict[str, dict] = {
     },
     "bmi": {
         "name": "BMI",
+        "unit": "kg/m²",
         "state_class": SensorStateClass.MEASUREMENT,
         "precision": 1,
     },

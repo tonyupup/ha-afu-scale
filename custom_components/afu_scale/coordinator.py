@@ -57,7 +57,12 @@ from .const import (
     RESET_DELTA_KG,
     LIVE_MIN_DELTA_KG,
     LIVE_MIN_INTERVAL,
+    AWAKE_HOLD,
+    IBEACON_MARK,
+    PLAIN_ADV_PREFIX,
+    NO_DATA_IDLE_TIMEOUT,
     POLL_ADV_MAX_AGE,
+    QUIET_MAX,
     RESULT_WAIT,
     POLL_INTERVAL,
     RETRY_COOLDOWN,
@@ -148,6 +153,11 @@ class AfuScaleCoordinator:
         self._session: asyncio.Task | None = None
         self._cooldown_until: float = 0.0
         self._unsub_poll: Callable[[], None] | None = None
+        self._awake_at: float = 0.0  # 最近一次见到"醒着"广播的时间
+        self._awake: bool | None = None  # None=还没判断出来
+        self._raw_seen = False  # 扫描器有没有提供原始广播字节
+        self._quiet_until: float = 0.0  # 空闲断开后静默到这个时间（让秤睡着）
+        self._session_got_data = False
         self._shutdown = False
         self._last_activity: float = 0.0
 
@@ -267,7 +277,8 @@ class AfuScaleCoordinator:
     def _on_advertisement(
         self, service_info: BluetoothServiceInfoBleak, change: BluetoothChange
     ) -> None:
-        """收到该秤的可连接广播，说明它醒了。已有会话或在冷却期内则忽略。"""
+        """收到该秤的可连接广播。已有会话、在冷却期内或秤睡着则忽略。"""
+        self._note_adv(service_info)
         self._maybe_connect(service_info)
 
     @callback
@@ -275,11 +286,43 @@ class AfuScaleCoordinator:
         info = bluetooth.async_last_service_info(
             self.hass, self.address, connectable=True
         )
-        if info is not None and time.monotonic() - info.time <= POLL_ADV_MAX_AGE:
+        if info is None:
+            return
+        self._note_adv(info)
+        if time.monotonic() - info.time <= POLL_ADV_MAX_AGE:
             self._maybe_connect(info)
 
+    def _note_adv(self, info: BluetoothServiceInfoBleak) -> None:
+        """从最新一包广播判断秤醒没醒（实测：有人踩上去/屏幕亮着时发 iBeacon 包，
+        空闲时只发带 FFB0 服务的普通广播；扫描响应两种状态都有，不能用）。"""
+        raw = info.raw
+        if not raw:
+            return
+        self._raw_seen = True
+        if IBEACON_MARK in raw:
+            self._awake_at = time.monotonic()
+            awake = True
+        elif raw.startswith(PLAIN_ADV_PREFIX):
+            self._awake_at = 0.0
+            self._quiet_until = 0.0  # 秤已经睡了，之后再出现 iBeacon 就是真的被唤醒
+            awake = False
+        else:
+            return  # 扫描响应：不改变判断
+        if awake != self._awake:
+            self._awake = awake
+            _LOGGER.info(
+                "AFU Scale: 秤%s (raw=%s)", "醒了" if awake else "睡着了", raw.hex()
+            )
+
+    def _is_awake(self) -> bool:
+        if not self._raw_seen:
+            return True  # 拿不到原始广播（如部分远程代理）：退回"随时连"
+        return time.monotonic() - self._awake_at <= AWAKE_HOLD
+
     def _maybe_connect(self, service_info: BluetoothServiceInfoBleak) -> None:
-        if self._shutdown:
+        if self._shutdown or not self._is_awake():
+            return
+        if time.monotonic() < self._quiet_until:
             return
         if self._session is not None and not self._session.done():
             return
@@ -315,19 +358,45 @@ class AfuScaleCoordinator:
                 # 秤可能已经又睡了，属于正常情况，不打 warning
                 _LOGGER.debug("AFU Scale: 连接失败 %s: %s", self.address, exc)
                 return
+            # establish_connection 重试时，前一次失败的尝试也会触发断开回调，
+            # 会让下面的循环误以为"秤已断开"而立刻收尾；连上之后重新判断
+            disconnected.clear()
+            if not client.is_connected:
+                _LOGGER.debug("AFU Scale: 连接建立后又断开 %s", self.address)
+                return
             _LOGGER.info("AFU Scale: 已连接 %s", self.address)
 
             self._last_activity = time.monotonic()
+            self._session_got_data = False
             await self._subscribe(client)
 
+            idle_end = False
             while not disconnected.is_set() and not self._shutdown:
                 try:
                     await asyncio.wait_for(disconnected.wait(), timeout=5)
                 except TimeoutError:
-                    if time.monotonic() - self._last_activity > SESSION_IDLE_TIMEOUT:
-                        _LOGGER.debug("AFU Scale: 会话空闲超时，主动断开")
+                    # 一个数据都没收到的会话多半是误唤醒，早点断开
+                    limit = (
+                        SESSION_IDLE_TIMEOUT
+                        if self._session_got_data
+                        else NO_DATA_IDLE_TIMEOUT
+                    )
+                    if time.monotonic() - self._last_activity > limit:
+                        idle_end = True
                         break
-            _LOGGER.info("AFU Scale: 会话结束 %s", self.address)
+            _LOGGER.info(
+                "AFU Scale: 会话结束 %s（%s）",
+                self.address,
+                (
+                    "空闲断开，" + ("收到过数据" if self._session_got_data else "没有数据")
+                    if idle_end
+                    else "秤主动断开或关闭"
+                ),
+            )
+            # 我们保持连接时秤不会睡；空闲断开后静默，等它睡着（看到普通广播）再继续。
+            # 拿不到原始广播就没法判断睡/醒，此时不静默，免得漏测
+            if idle_end and self._raw_seen:
+                self._quiet_until = time.monotonic() + QUIET_MAX
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -363,6 +432,7 @@ class AfuScaleCoordinator:
     def _on_notify(self, _characteristic, data: bytes) -> None:
         """bleak 通知回调（在事件循环中调用）。"""
         self._last_activity = time.monotonic()
+        self._session_got_data = True
         raw = bytes(data)
         _LOGGER.debug("AFU Scale: RAW %s", raw.hex())
 

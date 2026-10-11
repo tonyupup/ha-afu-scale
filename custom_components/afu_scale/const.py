@@ -30,9 +30,14 @@ CONNECT_ATTEMPTS = 2
 LIVE_MIN_DELTA_KG = 0.05  # 实时体重至少变化这么多才写实体
 LIVE_MIN_INTERVAL = 0.5  # 秒：实时体重写实体的最小间隔
 RESULT_WAIT = 45  # 秒：定格后等结果帧（带阻抗）的最长时间，实测 8~25 秒才到
-POLL_INTERVAL = 3  # 秒：轮询间隔
+IBEACON_MARK = bytes.fromhex("4c000215")  # Apple iBeacon：秤醒着时的广播
+PLAIN_ADV_PREFIX = bytes.fromhex("020106")  # 空闲时的普通可连接广播（flags 开头）
+AWAKE_HOLD = 15  # 秒：见到醒着的广播后，这么久内都当作醒着
+POLL_INTERVAL = 1  # 秒：轮询间隔
 POLL_ADV_MAX_AGE = 10  # 秒：最近广播多新才算
 RETRY_COOLDOWN = 5  # 会话结束后，多久内忽略新的广播（秒）
+NO_DATA_IDLE_TIMEOUT = 30  # 连上后一个通知都没收到，多久主动断开（秒）
+QUIET_MAX = 75  # 空闲断开后最长静默多久（秒）；实测秤无连接后 41~74 秒内睡着
 SESSION_IDLE_TIMEOUT = 60  # 连上后无任何通知多久主动断开，释放连接槽（秒）
 MEASURING_IDLE_TIMEOUT = 15  # 无有效数据多久把"测量中"置 False（秒）
 
