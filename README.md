@@ -7,7 +7,6 @@
 - `custom_components/afu_scale/` 集成本体（HACS 格式：自定义存储库添加本仓库即可，或手动拷到 HA 的 `custom_components/`）
 - `tests/test_matcher.py` 匹配逻辑的离线单测：`python3 -I -m unittest discover -s tests`
 - `tests/e2e_pod.py` 对测试 Pod 的端到端脚本
-- `dev/` 在 k3s 节点上起最小 HA 测试 Pod（hostNetwork + 蓝牙）：`k8s.yaml`、`configuration.yaml`、`dev.sh [restart]`
 
 ## 协议（实测，AFU-WL-TZ-A1）
 
