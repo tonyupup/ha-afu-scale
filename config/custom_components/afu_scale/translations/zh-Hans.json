@@ -1,0 +1,173 @@
+{
+  "config": {
+    "flow_title": "{name} ({address})",
+    "step": {
+      "bluetooth_confirm": {
+        "title": "发现 AFU 体脂秤",
+        "description": "发现体脂秤 {name} ({address})。添加后，第一次称重时会弹出卡片，让你新建用户。"
+      },
+      "user": {
+        "title": "AFU 体脂秤",
+        "description": "输入体脂秤的 MAC 地址。用户资料在第一次称重时再填。",
+        "data": {
+          "address": "MAC 地址"
+        },
+        "data_description": {
+          "address": "例如 D0:5C:00:29:DC:8C"
+        }
+      },
+      "new_user_menu": {
+        "title": "发现新用户？",
+        "description": "刚才有一次 {weight} kg（阻抗 {impedance} Ω）的称重，不属于任何已有用户。要怎么处理？如果只是访客，点“忽略”即可。",
+        "menu_options": {
+          "new_user": "新建用户",
+          "assign_existing": "归给现有用户（用这次读数更新他的体重基准）"
+        }
+      },
+      "new_user": {
+        "title": "新建用户",
+        "description": "这次称重是 {weight} kg（阻抗 {impedance} Ω），确认后会归给这个新用户。",
+        "data": {
+          "name": "名称",
+          "height_cm": "身高 (cm)",
+          "sex": "性别",
+          "age": "年龄"
+        },
+        "data_description": {
+          "name": "用于区分用户，例如 小明",
+          "height_cm": "用于体脂率等 BIA 指标计算",
+          "sex": "male=男, female=女",
+          "age": "用于 BIA 指标计算"
+        }
+      },
+      "assign_existing": {
+        "title": "归给现有用户",
+        "description": "把这次 {weight} kg（阻抗 {impedance} Ω）归给他，并**丢掉他原来的参考体重**，以这次为准。适合他体重变化很大、或很久没称重的情况。",
+        "data": {
+          "id": "用户"
+        }
+      }
+    },
+    "error": {
+      "invalid_mac": "MAC 地址格式无效，应为 AA:BB:CC:DD:EE:FF",
+      "name_taken": "已有同名用户"
+    },
+    "abort": {
+      "already_configured": "该体脂秤已配置",
+      "user_added": "已添加用户 {name}，刚才那次称重已归给他。",
+      "user_updated": "已更新 {name} 的体重基准，刚才那次称重已归给他。",
+      "entry_not_found": "找不到对应的体脂秤配置",
+      "max_users": "已达到用户数量上限（8）"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "用户管理",
+        "menu_options": {
+          "add_user": "添加用户",
+          "edit_user": "编辑用户",
+          "remove_user": "删除用户",
+          "debug": "调试"
+        }
+      },
+      "add_user": {
+        "title": "添加用户",
+        "description": "体重落在某个人的参考体重范围内，就认为是他。",
+        "data": {
+          "name": "名称",
+          "height_cm": "身高 (cm)",
+          "sex": "性别",
+          "age": "年龄",
+          "initial_weight": "当前体重 (kg，可选)",
+          "tolerance_kg": "匹配容差 (kg，可选)"
+        },
+        "data_description": {
+          "name": "用于区分用户，例如 小明",
+          "height_cm": "用于体脂率等 BIA 指标计算",
+          "sex": "male=男, female=女",
+          "age": "用于 BIA 指标计算",
+          "initial_weight": "填了之后，这个人第一次称重就能被认出来；不填则第一次称重会弹出卡片，让你把那次读数归给他",
+          "tolerance_kg": "体重落在其参考体重±该值内才算他；不填则自动（max(2kg, 3%)，并随久未称重而变宽）"
+        }
+      },
+      "edit_user": {
+        "title": "编辑用户",
+        "data": {
+          "id": "用户"
+        }
+      },
+      "edit_user_form": {
+        "title": "编辑用户",
+        "description": "",
+        "data": {
+          "name": "名称",
+          "height_cm": "身高 (cm)",
+          "sex": "性别",
+          "age": "年龄",
+          "initial_weight": "当前体重 (kg，可选)",
+          "tolerance_kg": "匹配容差 (kg，可选)"
+        },
+        "data_description": {
+          "name": "用于区分用户，例如 小明",
+          "height_cm": "用于体脂率等 BIA 指标计算",
+          "sex": "male=男, female=女",
+          "age": "用于 BIA 指标计算",
+          "initial_weight": "填了之后，这个人第一次称重就能被认出来；不填则第一次称重会弹出卡片，让你把那次读数归给他",
+          "tolerance_kg": "体重落在其参考体重±该值内才算他；不填则自动（max(2kg, 3%)，并随久未称重而变宽）"
+        }
+      },
+      "remove_user": {
+        "title": "删除用户",
+        "description": "删除后，该用户的实体和参考体重会被清除。",
+        "data": {
+          "id": "用户"
+        }
+      },
+      "debug": {
+        "title": "调试",
+        "description": "开启后可使用 afu_scale.inject_packet 服务，把一个原始报文当作秤发来的数据处理，用于在秤连不上时测试。",
+        "data": {
+          "debug": "开启调试"
+        }
+      }
+    },
+    "error": {
+      "name_taken": "已有同名用户"
+    },
+    "abort": {
+      "max_users": "已达到用户数量上限（8）",
+      "unknown_user": "找不到这个用户"
+    }
+  },
+  "services": {
+    "assign_last_measurement": {
+      "name": "归属最近一次测量",
+      "description": "把最近一次测量改归属给某个用户（例如被当成访客或认错人时），并撤销原归属。",
+      "fields": {
+        "user": {
+          "name": "用户",
+          "description": "用户名称"
+        },
+        "address": {
+          "name": "秤的 MAC",
+          "description": "有多台秤时指定；否则留空"
+        }
+      }
+    },
+    "inject_packet": {
+      "name": "注入报文（调试）",
+      "description": "把一个原始 20 字节报文当作秤发来的通知处理。需先在集成选项里开启调试。",
+      "fields": {
+        "packet": {
+          "name": "报文",
+          "description": "十六进制，可含空格"
+        },
+        "address": {
+          "name": "秤的 MAC",
+          "description": "有多台秤时指定；否则留空"
+        }
+      }
+    }
+  }
+}

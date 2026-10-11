@@ -1,0 +1,25 @@
+assign_last_measurement:
+  fields:
+    user:
+      required: true
+      example: 小明
+      selector:
+        text:
+    address:
+      required: false
+      example: "B0:82:AB:10:89:6E"
+      selector:
+        text:
+
+inject_packet:
+  fields:
+    packet:
+      required: true
+      example: "ac 29 80 68 f4 56 02 00 05 40 00 64 00 00 00 00 00 29 d5 1b"
+      selector:
+        text:
+    address:
+      required: false
+      example: "B0:82:AB:10:89:6E"
+      selector:
+        text:

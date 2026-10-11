@@ -1,0 +1,173 @@
+{
+  "config": {
+    "flow_title": "{name} ({address})",
+    "step": {
+      "bluetooth_confirm": {
+        "title": "AFU Body Scale discovered",
+        "description": "Found scale {name} ({address}). After adding it, your first weigh-in raises a card to create a user."
+      },
+      "user": {
+        "title": "AFU Body Scale",
+        "description": "Enter the scale's MAC address. User details are filled in at the first weigh-in.",
+        "data": {
+          "address": "MAC address"
+        },
+        "data_description": {
+          "address": "e.g. D0:5C:00:29:DC:8C"
+        }
+      },
+      "new_user_menu": {
+        "title": "New user?",
+        "description": "A weigh-in of {weight} kg (impedance {impedance} Ω) did not match any existing user. What should happen? If it is a guest, choose Ignore.",
+        "menu_options": {
+          "new_user": "Create a new user",
+          "assign_existing": "Assign to an existing user (reset their reference weight to this reading)"
+        }
+      },
+      "new_user": {
+        "title": "New user",
+        "description": "This weigh-in is {weight} kg (impedance {impedance} Ω); it will be assigned to the new user.",
+        "data": {
+          "name": "Name",
+          "height_cm": "Height (cm)",
+          "sex": "Sex",
+          "age": "Age"
+        },
+        "data_description": {
+          "name": "Used to tell users apart, e.g. Alex",
+          "height_cm": "Used for body-fat and other BIA calculations",
+          "sex": "male or female",
+          "age": "Used for BIA calculations"
+        }
+      },
+      "assign_existing": {
+        "title": "Assign to an existing user",
+        "description": "Assign this {weight} kg (impedance {impedance} Ω) to them and **discard their previous reference weight**. Use it when their weight changed a lot or they have not weighed in for a long time.",
+        "data": {
+          "id": "User"
+        }
+      }
+    },
+    "error": {
+      "invalid_mac": "Invalid MAC address format, expected AA:BB:CC:DD:EE:FF",
+      "name_taken": "A user with this name already exists"
+    },
+    "abort": {
+      "already_configured": "This scale is already configured",
+      "user_added": "User {name} added; the weigh-in that triggered this was assigned to them.",
+      "user_updated": "{name}'s reference weight was updated and the weigh-in was assigned to them.",
+      "entry_not_found": "The scale's configuration was not found",
+      "max_users": "Maximum number of users (8) reached"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Users",
+        "menu_options": {
+          "add_user": "Add user",
+          "edit_user": "Edit user",
+          "remove_user": "Remove user",
+          "debug": "Debug"
+        }
+      },
+      "add_user": {
+        "title": "Add user",
+        "description": "A reading within a person's reference weight range is treated as theirs.",
+        "data": {
+          "name": "Name",
+          "height_cm": "Height (cm)",
+          "sex": "Sex",
+          "age": "Age",
+          "initial_weight": "Current weight (kg, optional)",
+          "tolerance_kg": "Match tolerance (kg, optional)"
+        },
+        "data_description": {
+          "name": "Used to tell users apart, e.g. Alex",
+          "height_cm": "Used for body-fat and other BIA calculations",
+          "sex": "male or female",
+          "age": "Used for BIA calculations",
+          "initial_weight": "If set, this person is recognised from the very first weigh-in; otherwise their first weigh-in raises a card so you can assign it to them",
+          "tolerance_kg": "A reading counts as theirs if it is within ± this of their reference weight; auto (max(2kg, 3%), widening over time) if empty"
+        }
+      },
+      "edit_user": {
+        "title": "Edit user",
+        "data": {
+          "id": "User"
+        }
+      },
+      "edit_user_form": {
+        "title": "Edit user",
+        "description": "",
+        "data": {
+          "name": "Name",
+          "height_cm": "Height (cm)",
+          "sex": "Sex",
+          "age": "Age",
+          "initial_weight": "Current weight (kg, optional)",
+          "tolerance_kg": "Match tolerance (kg, optional)"
+        },
+        "data_description": {
+          "name": "Used to tell users apart, e.g. Alex",
+          "height_cm": "Used for body-fat and other BIA calculations",
+          "sex": "male or female",
+          "age": "Used for BIA calculations",
+          "initial_weight": "If set, this person is recognised from the very first weigh-in; otherwise their first weigh-in raises a card so you can assign it to them",
+          "tolerance_kg": "A reading counts as theirs if it is within ± this of their reference weight; auto (max(2kg, 3%), widening over time) if empty"
+        }
+      },
+      "remove_user": {
+        "title": "Remove user",
+        "description": "The user's entities and reference weight will be removed.",
+        "data": {
+          "id": "User"
+        }
+      },
+      "debug": {
+        "title": "Debug",
+        "description": "Enables the afu_scale.inject_packet service, which feeds a raw packet in as if the scale sent it. For testing when the scale can't connect.",
+        "data": {
+          "debug": "Enable debug"
+        }
+      }
+    },
+    "error": {
+      "name_taken": "A user with this name already exists"
+    },
+    "abort": {
+      "max_users": "Maximum number of users (8) reached",
+      "unknown_user": "User not found"
+    }
+  },
+  "services": {
+    "assign_last_measurement": {
+      "name": "Assign last measurement",
+      "description": "Reassign the latest measurement to a user (e.g. it was taken as a guest or attributed to the wrong person) and undo the previous attribution.",
+      "fields": {
+        "user": {
+          "name": "User",
+          "description": "User name"
+        },
+        "address": {
+          "name": "Scale MAC",
+          "description": "Only needed with several scales"
+        }
+      }
+    },
+    "inject_packet": {
+      "name": "Inject packet (debug)",
+      "description": "Process a raw 20-byte packet as if the scale sent it. Requires debug to be enabled in the integration options.",
+      "fields": {
+        "packet": {
+          "name": "Packet",
+          "description": "Hex, spaces allowed"
+        },
+        "address": {
+          "name": "Scale MAC",
+          "description": "Only needed with several scales"
+        }
+      }
+    }
+  }
+}

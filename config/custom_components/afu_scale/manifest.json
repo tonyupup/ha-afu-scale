@@ -1,0 +1,16 @@
+{
+  "domain": "afu_scale",
+  "name": "AFU Body Scale",
+  "bluetooth": [
+    {"local_name": "AFU-WL-TZ-A1", "connectable": true}
+  ],
+  "codeowners": ["@carl-chang"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/carl-chang/afu_scale",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/carl-chang/afu_scale/issues",
+  "requirements": ["bleak-retry-connector>=3.5.0"],
+  "version": "1.2.0"
+}
