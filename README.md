@@ -2,9 +2,19 @@
 
 自定义集成：蓝牙自动发现、体重/阻抗/电量/充电状态、多用户归属（按体重范围匹配，阻抗平局裁决，陌生读数走"发现卡片"）。
 
+<img src="custom_components/afu_scale/brand/icon.png" width="96" align="right">
+
+## 安装
+
+- **HACS**：自定义存储库 → `https://github.com/tonyupup/ha-afu-scale`，类别选"集成"，下载后重启 HA。
+- **手动**：把 `custom_components/afu_scale/` 拷到 HA 配置目录的 `custom_components/`，重启。
+
+重启后蓝牙会自动发现秤（`AFU-WL-TZ-A1`），确认添加即可。第一次称重定格后（约 8~25 秒）会在
+"设置 → 设备与服务"弹出"新用户？"卡片，按提示建用户；之后按体重范围自动识别。
+
 ## 目录
 
-- `custom_components/afu_scale/` 集成本体（HACS 格式：自定义存储库添加本仓库即可，或手动拷到 HA 的 `custom_components/`）
+- `custom_components/afu_scale/` 集成本体（含 `brand/` 图标）
 - `tests/test_matcher.py` 匹配逻辑的离线单测：`python3 -I -m unittest discover -s tests`
 - `tests/e2e_pod.py` 对测试 Pod 的端到端脚本
 
