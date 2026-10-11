@@ -9,7 +9,7 @@ import unittest
 
 _p = (
     pathlib.Path(__file__).resolve().parent.parent
-    / "config/custom_components/afu_scale/matcher.py"
+    / "custom_components/afu_scale/matcher.py"
 )
 _spec = importlib.util.spec_from_file_location("afu_matcher", _p)
 m = importlib.util.module_from_spec(_spec)
