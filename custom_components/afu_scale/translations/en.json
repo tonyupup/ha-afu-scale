@@ -68,7 +68,8 @@
           "add_user": "Add user",
           "edit_user": "Edit user",
           "remove_user": "Remove user",
-          "debug": "Debug"
+          "debug": "Debug",
+          "timing": "Timing"
         }
       },
       "add_user": {
@@ -129,6 +130,17 @@
         "description": "Enables the afu_scale.inject_packet service, which feeds a raw packet in as if the scale sent it. For testing when the scale can't connect.",
         "data": {
           "debug": "Enable debug"
+        }
+      },
+      "timing": {
+        "title": "Timing",
+        "description": "Seconds unless noted. The integration reloads on save.\nQuiet time: the longest time after an idle connection that the scale is left alone so it can sleep; 0 disables it (more empty connections, but no missed weigh-ins).",
+        "data": {
+          "quiet_max": "Quiet time (s)",
+          "no_data_timeout": "Disconnect with no data (s)",
+          "session_idle_timeout": "Idle disconnect after data (s)",
+          "result_wait": "Wait for impedance result (s)",
+          "reset_delta_kg": "Weight change that means another person (kg)"
         }
       }
     },

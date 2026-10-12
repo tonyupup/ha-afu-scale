@@ -54,19 +54,20 @@ from .const import (
     MEASURING_IDLE_TIMEOUT,
     NOTIFY_CHAR_UUID,
     PACKET_MAGIC,
-    RESET_DELTA_KG,
+    TUNABLES,
+    CONF_NO_DATA_TIMEOUT,
+    CONF_QUIET_MAX,
+    CONF_RESET_DELTA_KG,
+    CONF_RESULT_WAIT,
+    CONF_SESSION_IDLE_TIMEOUT,
     LIVE_MIN_DELTA_KG,
     LIVE_MIN_INTERVAL,
     AWAKE_HOLD,
     IBEACON_MARK,
     PLAIN_ADV_PREFIX,
-    NO_DATA_IDLE_TIMEOUT,
     POLL_ADV_MAX_AGE,
-    QUIET_MAX,
-    RESULT_WAIT,
     POLL_INTERVAL,
     RETRY_COOLDOWN,
-    SESSION_IDLE_TIMEOUT,
     STABLE_FLAG,
     STORAGE_VERSION,
     USER_SENSOR_KEYS,
@@ -142,12 +143,19 @@ class AfuScaleCoordinator:
     """由广播驱动的体脂秤 BLE 会话管理，负责多用户归属并分发测量数据。"""
 
     def __init__(self, hass: HomeAssistant, entry_id: str, address: str,
-                 users: list[UserProfile], debug: bool = False) -> None:
+                 users: list[UserProfile], debug: bool = False,
+                 settings: dict | None = None) -> None:
         self.hass = hass
         self.entry_id = entry_id
         self.address = address
         self.users = users
         self.debug = debug
+        cfg = {k: v[0] for k, v in TUNABLES.items()} | (settings or {})
+        self._no_data_timeout = cfg[CONF_NO_DATA_TIMEOUT]
+        self._session_idle_timeout = cfg[CONF_SESSION_IDLE_TIMEOUT]
+        self._quiet_max = cfg[CONF_QUIET_MAX]
+        self._result_wait = cfg[CONF_RESULT_WAIT]
+        self._reset_delta_kg = cfg[CONF_RESET_DELTA_KG]
 
         self._unsub_adv: Callable[[], None] | None = None
         self._session: asyncio.Task | None = None
@@ -377,9 +385,9 @@ class AfuScaleCoordinator:
                 except TimeoutError:
                     # 一个数据都没收到的会话多半是误唤醒，早点断开
                     limit = (
-                        SESSION_IDLE_TIMEOUT
+                        self._session_idle_timeout
                         if self._session_got_data
-                        else NO_DATA_IDLE_TIMEOUT
+                        else self._no_data_timeout
                     )
                     if time.monotonic() - self._last_activity > limit:
                         idle_end = True
@@ -396,7 +404,7 @@ class AfuScaleCoordinator:
             # 我们保持连接时秤不会睡；空闲断开后静默，等它睡着（看到普通广播）再继续。
             # 拿不到原始广播就没法判断睡/醒，此时不静默，免得漏测
             if idle_end and self._raw_seen:
-                self._quiet_until = time.monotonic() + QUIET_MAX
+                self._quiet_until = time.monotonic() + self._quiet_max
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001
@@ -452,7 +460,7 @@ class AfuScaleCoordinator:
             # 它会重复发，已提交过同一个体重就忽略
             weight_kg, impedance = result_frame
             if self._pending_weight is not None or self._committed_weight is None or (
-                abs(weight_kg - self._committed_weight) > RESET_DELTA_KG
+                abs(weight_kg - self._committed_weight) > self._reset_delta_kg
             ):
                 self._commit(weight_kg, impedance)
             return
@@ -492,7 +500,7 @@ class AfuScaleCoordinator:
         # 同一次称重只提交一次；体重和上次提交差很多，说明换人了，允许再提交
         if (
             self._committed_weight is not None
-            and abs(weight_kg - self._committed_weight) > RESET_DELTA_KG
+            and abs(weight_kg - self._committed_weight) > self._reset_delta_kg
         ):
             self._committed_weight = None
         if self._committed_weight is not None or self._pending_weight is not None:
@@ -500,7 +508,7 @@ class AfuScaleCoordinator:
         # 定格了，但阻抗在随后的结果帧里：先等它，等不到就按无阻抗提交
         self._pending_weight = weight_kg
         self._result_handle = self.hass.loop.call_later(
-            RESULT_WAIT, self._commit, weight_kg, 0.0
+            self._result_wait, self._commit, weight_kg, 0.0
         )
 
     def _commit(self, weight_kg: float, impedance: float) -> None:

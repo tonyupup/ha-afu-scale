@@ -68,7 +68,8 @@
           "add_user": "添加用户",
           "edit_user": "编辑用户",
           "remove_user": "删除用户",
-          "debug": "调试"
+          "debug": "调试",
+          "timing": "时间参数"
         }
       },
       "add_user": {
@@ -129,6 +130,17 @@
         "description": "开启后可使用 afu_scale.inject_packet 服务，把一个原始报文当作秤发来的数据处理，用于在秤连不上时测试。",
         "data": {
           "debug": "开启调试"
+        }
+      },
+      "timing": {
+        "title": "时间参数",
+        "description": "单位为秒。保存后集成会重载。\n静默时间：一次空连接结束后不再连秤的最长时间，让秤睡着；设为 0 则不静默（可能会反复空连接，但不会漏测）。",
+        "data": {
+          "quiet_max": "静默时间（秒）",
+          "no_data_timeout": "无数据断开（秒）",
+          "session_idle_timeout": "有数据后空闲断开（秒）",
+          "result_wait": "等待阻抗结果（秒）",
+          "reset_delta_kg": "视为换人的体重差（kg）"
         }
       }
     },

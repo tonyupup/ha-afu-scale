@@ -16,6 +16,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_AGE,
     CONF_DEBUG,
+    TUNABLES,
     CONF_HEIGHT_CM,
     CONF_INITIAL_WEIGHT,
     CONF_SEX,
@@ -302,7 +303,7 @@ class AfuScaleOptionsFlow(config_entries.OptionsFlow):
         options = ["add_user"]
         if self._users():
             options += ["edit_user", "remove_user"]
-        options.append("debug")
+        options += ["timing", "debug"]
         return self.async_show_menu(step_id="init", menu_options=options)
 
     async def async_step_add_user(self, user_input: dict[str, Any] | None = None):
@@ -378,6 +379,18 @@ class AfuScaleOptionsFlow(config_entries.OptionsFlow):
                 }
             ),
         )
+
+    async def async_step_timing(self, user_input: dict[str, Any] | None = None):
+        if user_input is not None:
+            return self._save(self._users(), **user_input)
+        opts = self.config_entry.options
+        schema = {}
+        for key, (default, lo, hi, step) in TUNABLES.items():
+            kind = float if isinstance(default, float) else int
+            schema[vol.Required(key, default=opts.get(key, default))] = vol.All(
+                vol.Coerce(kind), vol.Range(min=lo, max=hi)
+            )
+        return self.async_show_form(step_id="timing", data_schema=vol.Schema(schema))
 
     async def async_step_debug(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:

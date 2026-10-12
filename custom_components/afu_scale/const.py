@@ -50,7 +50,22 @@ CONF_DEBUG = "debug"  # options：开启后才允许 afu_scale.inject_packet
 MAX_USERS = 8
 
 # 同一次会话里，体重与上次提交相差多少 kg 以上才视为"换了个人"，允许再次提交
-RESET_DELTA_KG = 3.0
+RESET_DELTA_KG_DEFAULT = 3.0
+
+# 可在选项里调的时间参数：键 -> (默认值, 最小, 最大, 步长)；默认值取自上面的常量
+CONF_QUIET_MAX = "quiet_max"
+CONF_NO_DATA_TIMEOUT = "no_data_timeout"
+CONF_SESSION_IDLE_TIMEOUT = "session_idle_timeout"
+CONF_RESULT_WAIT = "result_wait"
+CONF_RESET_DELTA_KG = "reset_delta_kg"
+TUNABLES = {
+    CONF_QUIET_MAX: (QUIET_MAX, 0, 300, 1),
+    CONF_NO_DATA_TIMEOUT: (NO_DATA_IDLE_TIMEOUT, 5, 300, 1),
+    CONF_SESSION_IDLE_TIMEOUT: (SESSION_IDLE_TIMEOUT, 10, 600, 1),
+    CONF_RESULT_WAIT: (RESULT_WAIT, 10, 120, 1),
+    CONF_RESET_DELTA_KG: (RESET_DELTA_KG_DEFAULT, 0.5, 30, 0.5),
+}
+
 
 # 发现流程创建新用户后，把那次访客读数交给新协调器采纳（用户列表变更会触发重载）
 PENDING_KEY = f"{DOMAIN}_pending"

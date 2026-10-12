@@ -19,6 +19,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_DEBUG,
+    TUNABLES,
     DOMAIN,
     PENDING_KEY,
     SERVICE_ASSIGN,
@@ -55,6 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         address,
         get_users(entry),
         debug=bool(entry.options.get(CONF_DEBUG, False)),
+        settings={k: entry.options[k] for k in TUNABLES if k in entry.options},
     )
     await coordinator.async_load()
     _async_remove_deleted_users(hass, entry, address, {u.id for u in coordinator.users})
